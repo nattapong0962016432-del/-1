@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>กู้ภัย ไฟฟ้าวิกฤต · ห้องควบคุมกฎของโอห์ม (ม.3)</title>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--night:#06121d;--edge:#2f5068;--amber:#ffb938;--amber2:#ffd98a;--cyan:#5ce1f2;--red:#ff5a4f;--green:#7be0b0;--text:#f2f6f4;--muted:#a9c0cc;--bg:#0b1b2a}
+*{box-sizing:border-box}
+body{margin:0;font-family:Kanit,sans-serif;color:var(--text);background:var(--night)}
+.app{min-height:100vh;padding:clamp(12px,3vw,30px);background:radial-gradient(circle at 85% 6%,#1f4560 0,transparent 38%),radial-gradient(circle at 5% 100%,#3a1d1d 0,transparent 35%),linear-gradient(160deg,#06121d,#0d2232 60%,#06121d);position:relative}
+.app.alert:after{content:"";position:fixed;inset:0;pointer-events:none;box-shadow:inset 0 0 140px rgba(255,70,60,.45);animation:pulse 1s ease-in-out infinite;z-index:50}
+@keyframes pulse{50%{opacity:.25}}
+.frame{max-width:1160px;margin:auto}
+.quake .frame{animation:quake .1s linear 10}
+@keyframes quake{0%,100%{transform:translate(0,0)}20%{transform:translate(-7px,4px)}40%{transform:translate(6px,-5px)}60%{transform:translate(-5px,-3px)}80%{transform:translate(7px,3px)}}
+.hazard{height:8px;border-radius:6px;background:repeating-linear-gradient(-45deg,var(--amber) 0 14px,#16110a 14px 28px);margin-bottom:14px}
+header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;padding-bottom:14px;border-bottom:1px solid var(--edge)}
+.eyebrow{margin:0;color:var(--amber);letter-spacing:.12em;font-weight:700;font-size:.8rem}
+h1{margin:2px 0 0;font-size:clamp(1.5rem,4vw,2.5rem);line-height:1.15;font-weight:800}
+h1 span{color:var(--amber)}
+h2{margin:6px 0 0;font-size:clamp(1.2rem,2.6vw,1.8rem);line-height:1.3}
+h3{margin:0;font-size:1.08rem;line-height:1.55}
+.muted{color:var(--muted)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{border:1px solid var(--edge);background:#12293a;color:var(--text);border-radius:999px;padding:8px 16px;font:600 .92rem Kanit;cursor:pointer}
+.tab.on{background:var(--amber);color:#1b1305;border-color:var(--amber)}
+.hud{display:flex;gap:8px;align-items:center}
+.pill{border:1px solid var(--edge);border-radius:999px;padding:6px 13px;background:#12293a;font-size:.9rem}
+.clock{font-weight:700;font-size:1.15rem;font-variant-numeric:tabular-nums;color:var(--amber2);min-width:76px;text-align:center}
+.clock.low{color:var(--red);border-color:var(--red)}
+.icon-btn{border:1px solid var(--edge);background:#12293a;color:var(--text);border-radius:999px;width:40px;height:40px;cursor:pointer;font-size:1.05rem}
+.bars{margin:14px 0 18px;display:grid;gap:6px}
+.bar{height:8px;background:#1c3345;border-radius:20px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;transition:width .35s,background .3s}
+#pf{background:linear-gradient(90deg,var(--cyan),var(--green))}
+#tf{width:100%;background:var(--amber)}
+.bl{display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted)}
+.surface{background:linear-gradient(180deg,#123049,#0d2232);border:1px solid var(--edge);border-radius:20px;box-shadow:0 18px 50px #0005}
+.p{padding:clamp(14px,2.6vw,26px)}
+.game{display:grid;gap:16px}
+@media(min-width:960px){.game{grid-template-columns:1.55fr 1fr}}
+.stack{display:grid;gap:16px;align-content:start}
+.btn{border:0;background:var(--amber);color:#1b1305;border-radius:12px;padding:11px 20px;font:700 .98rem Kanit;cursor:pointer;transition:transform .15s,filter .15s;box-shadow:0 4px 0 #a8741a}
+.btn:hover:not(:disabled){transform:translateY(-2px);filter:brightness(1.08)}
+.btn:active:not(:disabled){transform:translateY(2px);box-shadow:0 1px 0 #a8741a}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.ghost{background:#1c3b52;color:var(--text);box-shadow:0 4px 0 #0c1d2a;border:1px solid #47697f}
+.btn.power{background:var(--green);box-shadow:0 4px 0 #3d8a68;font-size:1.05rem;padding:12px 26px}
+.btn.power.live{background:var(--red);box-shadow:0 4px 0 #a02a22;color:#fff}
+button:focus-visible,input:focus-visible{outline:3px solid var(--cyan);outline-offset:3px}
+[hidden]{display:none!important}
+.cwrap{position:relative;border-radius:16px;overflow:hidden;border:2px solid #456073;background:var(--bg)}
+canvas{display:block;width:100%}
+.chud{position:absolute;left:10px;top:10px;display:flex;gap:6px;flex-wrap:wrap;pointer-events:none;font-size:.8rem}
+.chud span{background:#06121dcc;border:1px solid #3d6075;border-radius:999px;padding:3px 11px}
+.sl{margin-top:8px}
+.sl label{display:flex;justify-content:space-between;align-items:center;font-weight:600;margin-bottom:2px}
+.sl label b{background:#0b1b2a;border:1px solid var(--edge);border-radius:999px;padding:2px 14px;color:var(--amber2)}
+.sl .lk{color:var(--muted);font-size:.8rem;font-weight:400}
+input[type=range]{width:100%;accent-color:var(--amber);height:32px}
+input[type=range]:disabled{opacity:.45}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;align-items:center}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 4px}
+.chip{border:1px solid #47697f;background:#16344a;color:var(--text);border-radius:999px;padding:6px 14px;font:600 .88rem Kanit;cursor:pointer}
+.chip.on{background:var(--cyan);color:#06222a;border-color:var(--cyan)}
+.chip:hover{border-color:var(--amber)}
+.note{min-height:50px;border-left:3px solid var(--amber);padding:9px 13px;background:#1a3446;border-radius:0 10px 10px 0;margin:12px 0 0}
+.note.ok{border-color:var(--green)}.note.no{border-color:var(--red)}
+.ro{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.ro div{background:#0b1b2a;border:1px solid var(--edge);border-radius:14px;padding:8px 4px;text-align:center}
+.ro small{display:block;color:var(--muted);font-size:.72rem}
+.ro b{font-size:1.2rem;font-variant-numeric:tabular-nums}
+.ro .v b{color:var(--cyan)}.ro .i b{color:var(--green)}.ro .r b{color:var(--amber)}.ro .p b{color:#c9a5ff}
+#detail{margin-top:12px;font-size:.88rem;display:grid;gap:4px}
+#detail div{background:#0b1b2a;border-radius:10px;padding:5px 10px;border:1px solid #234257}
+.rule{margin:10px 0 0;font-size:.82rem;color:var(--amber2)}
+.dots{display:flex;gap:6px;margin-top:12px}
+.dots i{flex:1;height:8px;border-radius:6px;background:#1c3345}
+.dots i.done{background:var(--green)}.dots i.now{background:var(--amber)}
+.hv{position:relative;width:240px;max-width:100%;aspect-ratio:4/3;border-radius:12px;overflow:hidden;background:#000;transform:scaleX(-1);border:2px solid var(--cyan)}
+.hv video,.hv canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.stars{font-size:2rem;letter-spacing:.2em;color:var(--amber)}
+.card{padding:14px 16px;background:#0f2a3d;border:1px solid var(--edge);border-radius:14px}
+.g3{display:grid;gap:14px}
+@media(min-width:760px){.g3{grid-template-columns:repeat(3,1fr)}.g2{grid-template-columns:repeat(2,1fr)}}
+.g2{display:grid;gap:14px}
+.formula{display:inline-block;background:#0b1b2a;border:1px solid var(--edge);border-radius:14px;padding:10px 20px;font-size:1.15rem;font-weight:700;color:var(--amber2)}
+.q{margin-top:14px}
+.opts{display:grid;gap:8px;margin-top:10px}
+@media(min-width:760px){.opts{grid-template-columns:1fr 1fr}}
+.opt{display:flex;gap:10px;align-items:flex-start;padding:11px 14px;border:1px solid #4a6c80;border-radius:12px;background:#173247;cursor:pointer}
+.opt:hover{border-color:var(--cyan)}
+.opt.good{border-color:var(--green);background:#16392f}.opt.bad{border-color:var(--red);background:#3a1c20}
+.exp{display:none;margin-top:10px;padding:10px 14px;border-left:3px solid var(--cyan);background:#12293a;border-radius:0 10px 10px 0;font-size:.92rem}
+#toast{position:fixed;left:50%;bottom:22px;transform:translate(-50%,30px);max-width:92vw;padding:11px 18px;border-radius:14px;background:#0b1b28;border:1px solid var(--amber);box-shadow:0 10px 30px #0008;opacity:0;pointer-events:none;transition:.25s;z-index:99;text-align:center}
+#toast.show{opacity:1;transform:translate(-50%,0)}#toast.bad{border-color:var(--red)}#toast.good{border-color:var(--green)}
+footer{text-align:center;padding:18px 0 4px;color:var(--muted);font-size:.82rem}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app" id="app"><div class="frame">
+<div class="hazard"></div>
+<header>
+  <div><p class="eyebrow">ภารกิจวิทยาศาสตร์ ม.3 · วงจรไฟฟ้าและกฎของโอห์ม</p><h1>กู้ภัย <span>ไฟฟ้าวิกฤต</span> · ห้องควบคุม</h1></div>
+  <nav class="tabs">
+    <button class="tab on" data-tab="game" type="button">⚡ ภารกิจ</button>
+    <button class="tab" data-tab="learn" type="button">📘 บทเรียนย่อ</button>
+    <button class="tab" data-tab="quiz" type="button">📝 แบบทดสอบ 5 ข้อ</button>
+  </nav>
+  <div class="hud"><span id="clock" class="pill clock" aria-label="เวลาที่เหลือ">03:00</span><button id="mute" class="icon-btn" type="button" aria-label="เปิด/ปิดเสียง">🔊</button></div>
+</header>
+<div class="bars">
+  <div class="bar" role="progressbar" aria-label="ความคืบหน้าภารกิจ" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="prog"><i id="pf"></i></div>
+  <div class="bar" aria-hidden="true"><i id="tf"></i></div>
+  <div class="bl"><span>ภารกิจที่สำเร็จในหมวด</span><span>เวลาก่อนไฟสำรองหมด</span></div>
+</div>
+
+<!-- GAME -->
+<section id="tab-game" class="game">
+  <div class="stack">
+    <div class="surface p">
+      <div id="topobar" hidden>
+        <p class="eyebrow" style="margin-bottom:2px">โหมดอิสระ · เลือกชนิดวงจร</p>
+        <div class="chips" role="group" aria-label="เลือกชนิดวงจร" id="topochips"></div>
+      </div>
+      <div class="cwrap"><canvas id="cc" aria-label="วงจรไฟฟ้า แบตเตอรี่ ตัวต้านทาน ฟิวส์ และสวิตช์"></canvas>
+        <div class="chud"><span id="h-topo">วงจรอย่างง่าย</span><span id="h-sw">สวิตช์: ตัดไฟ</span><span>ฟิวส์ 300 mA</span></div></div>
+      <div class="sl"><label for="sv"><span>ความต่างศักย์ V <span class="lk" id="lk-sv"></span></span><b id="lv">5 V</b></label><input id="sv" type="range" min="1" max="24" step="1" value="5"></div>
+      <div class="sl" id="row-sr"><label for="sr"><span><span id="nm-sr">ความต้านทาน R</span> <span class="lk" id="lk-sr"></span></span><b id="lr">500 Ω</b></label><input id="sr" type="range" min="10" max="1000" step="10" value="500"></div>
+      <div class="sl" id="row-sr2" hidden><label for="sr2"><span>ความต้านทาน R₂ <span class="lk" id="lk-sr2"></span></span><b id="lr2">500 Ω</b></label><input id="sr2" type="range" min="10" max="1000" step="10" value="500"></div>
+      <div class="sl" id="row-sr3" hidden><label for="sr3"><span>ความต้านทาน R₃ <span class="lk" id="lk-sr3"></span></span><b id="lr3">500 Ω</b></label><input id="sr3" type="range" min="10" max="1000" step="10" value="500"></div>
+      <div class="row">
+        <button id="pw" class="btn power" type="button" disabled>⏻ จ่ายไฟ</button>
+        <button id="hintb" class="btn ghost" type="button" disabled>💡 คำใบ้ (−5 วิ)</button>
+        <button id="handb" class="btn ghost" type="button">🖐 ควบคุมด้วยมือ</button>
+      </div>
+      <div id="handbox" hidden style="margin-top:14px;display:flex;gap:14px;flex-wrap:wrap;align-items:center">
+        <div class="hv"><video id="hv" playsinline muted></video><canvas id="hc" width="240" height="180"></canvas></div>
+        <div style="flex:1;min-width:200px"><p class="muted" style="margin:0;font-size:.9rem;line-height:1.7">🤏 บีบนิ้วโป้ง–ชี้ = ปรับ V<br>↔ เลื่อนมือซ้าย/ขวา = ปรับ R₁<br>↕ ยกมือขึ้น/ลง = ปรับ R₂ (วงจรที่มี R₂)<br>✊ กำหมัดค้าง = จ่ายไฟ/ตัดไฟ<br>ภาพกล้องประมวลผลในเครื่องของคุณเท่านั้น</p><p id="hstat" class="note">กำลังเริ่มกล้อง...</p></div>
+      </div>
+    </div>
+  </div>
+  <aside class="stack">
+    <div class="surface p" id="mcard"></div>
+    <div class="surface p">
+      <div class="ro" aria-live="polite">
+        <div class="v"><small>V (โวลต์)</small><b id="rv">–</b></div>
+        <div class="i"><small>I รวม (mA)</small><b id="ri">?</b></div>
+        <div class="r"><small>R รวม (Ω)</small><b id="rr">–</b></div>
+        <div class="p"><small>P (W)</small><b id="rp">?</b></div>
+      </div>
+      <div id="detail" aria-live="polite"></div>
+      <p class="rule" id="rule"></p>
+      <canvas id="gc" style="margin-top:12px;border-radius:12px;background:#0b1b2a;border:1px solid var(--edge)" aria-label="กราฟ V กับ I"></canvas>
+      <p class="muted" style="font-size:.8rem;margin:6px 0 0">กราฟ I รวม = V ÷ R รวม · จุดเหลืองคือค่าที่ตั้งไว้ · เส้นแดงคือขีดจำกัดฟิวส์</p>
+    </div>
+  </aside>
+</section>
+
+<!-- LEARN -->
+<section id="tab-learn" hidden>
+  <div class="surface p">
+    <p class="eyebrow">บทเรียนวิทยาศาสตร์ ม.3</p>
+    <h2>ความสัมพันธ์ระหว่างความต่างศักย์ กระแสไฟฟ้า และความต้านทาน</h2>
+    <div class="g3" style="margin-top:16px">
+      <div class="card"><h3>⚡ 1. ความต่างศักย์ (V)</h3><p class="muted">พลังงานต่อหนึ่งหน่วยประจุที่ผลักให้ประจุเคลื่อนที่ในวงจร หน่วยโวลต์ (V) วัดด้วยโวลต์มิเตอร์ที่ต่อแบบขนาน</p></div>
+      <div class="card"><h3>🌊 2. กระแสไฟฟ้า (I)</h3><p class="muted">ปริมาณประจุที่ไหลผ่านหน้าตัดตัวนำในหนึ่งหน่วยเวลา หน่วยแอมแปร์ (A) หรือ mA วัดด้วยแอมมิเตอร์ที่ต่อแบบอนุกรม</p></div>
+      <div class="card"><h3>🛡️ 3. ความต้านทาน (R)</h3><p class="muted">สมบัติที่ต้านการไหลของกระแส หน่วยโอห์ม (Ω) ขึ้นกับชนิด ขนาด ความยาว และอุณหภูมิของตัวนำ</p></div>
+    </div>
+    <div class="card" style="margin-top:16px;text-align:center;border-left:4px solid var(--amber)">
+      <h3>กฎของโอห์ม</h3>
+      <p class="muted" style="max-width:640px;margin:8px auto">กระแสไฟฟ้าที่ผ่านตัวนำแปรผันตรงกับความต่างศักย์ระหว่างปลายตัวนำ เมื่อความต้านทานคงที่และอุณหภูมิคงที่</p>
+      <div class="formula">V = I × R &nbsp;|&nbsp; I = V ÷ R &nbsp;|&nbsp; R = V ÷ I</div>
+      <p class="muted" style="margin-top:10px">แปลงหน่วย: 1 A = 1000 mA · กำลังไฟฟ้า P = V × I (วัตต์)</p>
+    </div>
+    <h3 style="margin-top:20px">การต่อตัวต้านทาน 3 แบบ</h3>
+    <div class="g3" style="margin-top:10px">
+      <div class="card"><h3>➖ อนุกรม</h3><p class="muted" style="margin:6px 0">ต่อเรียงกันทางเดียว</p><p style="margin:0">• I เท่ากันทุกตัว<br>• V รวม = V₁ + V₂<br>• R รวม = R₁ + R₂</p></div>
+      <div class="card"><h3>⫴ ขนาน</h3><p class="muted" style="margin:6px 0">แยกหลายแขนง</p><p style="margin:0">• V เท่ากันทุกแขนง<br>• I รวม = I₁ + I₂<br>• 1/R รวม = 1/R₁ + 1/R₂</p></div>
+      <div class="card"><h3>🔀 ผสม</h3><p class="muted" style="margin:6px 0">มีทั้งอนุกรมและขนาน</p><p style="margin:0">• หา R ส่วนขนานก่อน<br>• แล้วบวกกับส่วนอนุกรม<br>• ใช้ I = V ÷ R รวม</p></div>
+    </div>
+    <div class="card" style="margin-top:16px"><h3>🔗 เชื่อมกับเกม</h3><p class="muted" style="margin:6px 0 0">ฟิวส์ขาดเมื่อ I รวมเกิน 300 mA เลือกหมวดภารกิจ (พื้นฐาน อนุกรม ขนาน ผสม) หรือใช้โหมดอิสระเพื่อสลับชนิดวงจรและดูแรงดันกับกระแสของตัวต้านทานแต่ละตัวได้</p></div>
+    <button class="btn" style="margin-top:16px" type="button" onclick="switchTab('game')">กลับไปทำภารกิจ →</button>
+  </div>
+</section>
+
+<!-- QUIZ -->
+<section id="tab-quiz" hidden>
+  <div class="surface p">
+    <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;align-items:center">
+      <div><p class="eyebrow">ประเมินการเรียนรู้</p><h2>แบบทดสอบท้ายภารกิจ (5 ข้อ)</h2></div>
+      <div id="qscore" class="pill" hidden style="font-weight:700;color:var(--green)"></div>
+    </div>
+    <div id="qbox"></div>
+    <div class="row"><button class="btn" type="button" onclick="submitQuiz()">✔ ตรวจคำตอบ</button><button class="btn ghost" type="button" onclick="loadQuiz()">↻ ทำใหม่</button></div>
+  </div>
+</section>
+<footer>CIRCUIT &amp; SURVIVAL · สื่อโต้ตอบกฎของโอห์ม ชั้นมัธยมศึกษาปีที่ 3</footer>
+</div></div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const $=id=>document.getElementById(id);
+const FUSE=.3;
+const TOPOS={simple:'วงจรอย่างง่าย',series:'อนุกรม',parallel:'ขนาน',mixed:'ผสม'};
+const CATS={basic:{name:'พื้นฐาน',total:180},series:{name:'อนุกรม',total:150},parallel:{name:'ขนาน',total:150},mixed:{name:'ผสม',total:180}};
+let phase='idle',cat='basic',topo='simple',mi=0,total=180,seconds=180,timer=null,quakeAt=[],on=false,blown=false,blows=0,busy=false,hintUsed=false,muted=false,fb='',fbk='',flicker=0,spark=0;
+
+/* ---------- missions (แยกตามหมวด) ---------- */
+const near=(a,b)=>Math.abs(a-b)<=b*.03;
+const missions={
+basic:[
+ {topo:'simple',t:'ไฟฉุกเฉินต้องการกระแส 60 mA แหล่งจ่ายล็อกไว้ที่ 12 V ปรับความต้านทาน R ให้ถูกต้อง',goal:'I = 60 mA',tgt:60,lock:{v:12},ok:s=>near(s.mA,60),hint:'R = V ÷ I = 12 ÷ 0.06 (แปลง 60 mA เป็น 0.06 A)',ex:'R = 12 ÷ 0.06 = 200 Ω'},
+ {topo:'simple',t:'ตู้ควบคุมต่อกับตัวต้านทาน 100 Ω (ล็อกไว้) ต้องการกระแส 150 mA ปรับความต่างศักย์ V',goal:'I = 150 mA',tgt:150,lock:{r1:100},ok:s=>near(s.mA,150),hint:'V = I × R = 0.15 × 100',ex:'V = 0.15 × 100 = 15 V'},
+ {topo:'simple',t:'พัดลมระบายอากาศต้องการกระแส 200 mA ปรับได้อิสระทั้ง V และ R เลือกคู่ใดก็ได้ที่ใช้ได้ แต่ห้ามเกินขีดจำกัดฟิวส์',goal:'I = 200 mA',tgt:200,ok:s=>near(s.mA,200),hint:'เลือก V ก่อน เช่น 10 V แล้วหา R = V ÷ I',ex:'หลายคู่ใช้ได้ เช่น 10 V กับ 50 Ω'},
+ {topo:'simple',t:'โหลดของปั๊มน้ำได้รับ 9 V (ล็อกไว้) และต้องมีกระแส 45 mA ตั้งค่า R ให้ถูกต้อง',goal:'I = 45 mA',tgt:45,lock:{v:9},ok:s=>near(s.mA,45),hint:'R = V ÷ I = 9 ÷ 0.045',ex:'R = 9 ÷ 0.045 = 200 Ω'},
+ {topo:'simple',t:'ไฟสำรองประตูนิรภัยต้องการ 6 V และกระแส 30 mA พร้อมกัน',goal:'V = 6 V และ I = 30 mA',tgt:30,ok:s=>s.v===6&&near(s.mA,30),msg:s=>'V = '+s.v+' V, I = '+s.mA.toFixed(0)+' mA ยังไม่ตรงเป้า',hint:'ตั้ง V = 6 แล้ว R = 6 ÷ 0.03',ex:'R = 6 ÷ 0.03 = 200 Ω'}],
+series:[
+ {topo:'series',t:'ไฟสัญญาณต่ออนุกรม R₁ = 100 Ω (ล็อก) กับ R₂ ที่ 12 V ต้องการกระแส 40 mA ตั้ง R₂',goal:'I = 40 mA',tgt:40,lock:{v:12,r1:100},ok:s=>near(s.mA,40),hint:'R รวม = V ÷ I = 12 ÷ 0.04 = 300 Ω แล้ว R₂ = 300 − 100',ex:'R รวม 300 Ω → R₂ = 300 − 100 = 200 Ω'},
+ {topo:'series',t:'R₁ = 150 Ω และ R₂ = 250 Ω ต่ออนุกรมกัน (ล็อก) ต้องการกระแส 60 mA ตั้ง V',goal:'I = 60 mA',tgt:60,lock:{r1:150,r2:250},ok:s=>near(s.mA,60),hint:'R รวม = 150 + 250 = 400 Ω แล้ว V = I × R รวม = 0.06 × 400',ex:'V = 0.06 × 400 = 24 V'},
+ {topo:'series',t:'แหล่งจ่าย 12 V (ล็อก) ต้องการกระแส 30 mA และให้ R₁ มีแรงดันตกคร่อม 6 V ตั้ง R₁ และ R₂',goal:'I = 30 mA และ V ที่ R₁ = 6 V',tgt:30,lock:{v:12},ok:s=>near(s.mA,30)&&near(s.comps[0].v,6),msg:s=>'I = '+s.mA.toFixed(0)+' mA, V ที่ R₁ = '+s.comps[0].v.toFixed(1)+' V ยังไม่ตรงเป้า',hint:'R₁ = V₁ ÷ I = 6 ÷ 0.03 และ R รวม = 12 ÷ 0.03 = 400 Ω แล้ว R₂ = R รวม − R₁',ex:'R₁ = 200 Ω, R รวม 400 Ω → R₂ = 200 Ω'}],
+parallel:[
+ {topo:'parallel',t:'R₁ = 200 Ω ต่อขนานกับ R₂ ที่ 12 V (ล็อก) ต้องการกระแสรวม 120 mA ตั้ง R₂',goal:'I รวม = 120 mA',tgt:120,lock:{v:12,r1:200},ok:s=>near(s.mA,120),hint:'I₁ = 12 ÷ 200 = 60 mA ดังนั้น I₂ = 120 − 60 = 60 mA แล้ว R₂ = V ÷ I₂',ex:'I₂ = 60 mA → R₂ = 12 ÷ 0.06 = 200 Ω'},
+ {topo:'parallel',t:'R₁ = R₂ = 100 Ω ต่อขนานกัน (ล็อก) ต้องการกระแสรวม 240 mA ตั้ง V',goal:'I รวม = 240 mA',tgt:240,lock:{r1:100,r2:100},ok:s=>near(s.mA,240),hint:'R รวม = (100 × 100) ÷ 200 = 50 Ω แล้ว V = I × R รวม',ex:'V = 0.24 × 50 = 12 V'},
+ {topo:'parallel',t:'แหล่งจ่าย 12 V (ล็อก) ต้องการกระแสรวม 200 mA โดยแขนง R₁ มีกระแส 120 mA ตั้ง R₁ และ R₂',goal:'I รวม = 200 mA และ I₁ = 120 mA',tgt:200,lock:{v:12},ok:s=>near(s.mA,200)&&near(s.comps[0].i*1000,120),msg:s=>'I รวม = '+s.mA.toFixed(0)+' mA, I₁ = '+(s.comps[0].i*1000).toFixed(0)+' mA ยังไม่ตรงเป้า',hint:'R₁ = 12 ÷ 0.12 · I₂ = 200 − 120 = 80 mA แล้ว R₂ = 12 ÷ 0.08',ex:'R₁ = 100 Ω, R₂ = 150 Ω'}],
+mixed:[
+ {topo:'mixed',t:'R₁ = 100 Ω ต่ออนุกรมกับ R₂, R₃ (200 Ω ขนานกัน) ทุกตัวล็อก ต้องการกระแสรวม 90 mA ตั้ง V',goal:'I รวม = 90 mA',tgt:90,lock:{r1:100,r2:200,r3:200},ok:s=>near(s.mA,90),hint:'ส่วนขนาน 200 || 200 = 100 Ω, R รวม = 100 + 100 = 200 Ω แล้ว V = 0.09 × 200',ex:'V = 0.09 × 200 = 18 V'},
+ {topo:'mixed',t:'12 V ล็อก R₂ = R₃ = 200 Ω ขนานกัน (ล็อก) ต้องการกระแสรวม 80 mA ตั้ง R₁',goal:'I รวม = 80 mA',tgt:80,lock:{v:12,r2:200,r3:200},ok:s=>near(s.mA,80),hint:'R รวม = 12 ÷ 0.08 = 150 Ω ส่วนขนานเท่ากับ 100 Ω ดังนั้น R₁ = 150 − 100',ex:'R₁ = 150 − 100 = 50 Ω'},
+ {topo:'mixed',t:'12 V และ R₁ = 100 Ω ล็อก ต้องการกระแสรวม 80 mA ตั้ง R₂ และ R₃ (ตั้งให้เท่ากันก็ได้)',goal:'I รวม = 80 mA',tgt:80,lock:{v:12,r1:100},ok:s=>near(s.mA,80),hint:'R รวม = 150 Ω จึงต้องให้ส่วนขนานเท่ากับ 50 Ω ลองให้ R₂ = R₃ = 100 Ω',ex:'R₂ ∥ R₃ = 50 Ω เช่น 100 Ω กับ 100 Ω'}]
+};
+const cur=()=>missions[cat][mi];
+
+/* ---------- helpers ---------- */
+function toast(m,k){const t=$('toast');t.textContent=m;t.className='show '+(k||'');clearTimeout(toast.t);toast.t=setTimeout(()=>t.className='',2600)}
+let ac;
+function tone(f,d,ty,v,w){if(muted)return;try{ac=ac||new(window.AudioContext||window.webkitAudioContext)();const t0=ac.currentTime+(w||0),o=ac.createOscillator(),g=ac.createGain();o.type=ty||'sine';o.frequency.value=f;g.gain.setValueAtTime(v||.07,t0);g.gain.exponentialRampToValueAtTime(.0001,t0+d);o.connect(g);g.connect(ac.destination);o.start(t0);o.stop(t0+d)}catch(e){}}
+const sfx={ok:()=>{tone(660,.12);tone(880,.2,'sine',.07,.1)},bad:()=>tone(140,.3,'sawtooth',.06),on:()=>tone(300,.12,'square',.05),zap:()=>{tone(90,.5,'sawtooth',.12);tone(1800,.15,'square',.05)},quake:()=>{tone(50,1,'sawtooth',.12);tone(68,1,'square',.05)},tick:()=>tone(900,.05,'square',.03),win:()=>[523,659,784,1047].forEach((f,i)=>tone(f,.25,'triangle',.07,i*.12))};
+$('mute').onclick=()=>{muted=!muted;$('mute').textContent=muted?'🔇':'🔊'};
+function quake(m){const a=$('app');a.classList.add('quake');setTimeout(()=>a.classList.remove('quake'),1100);sfx.quake();try{navigator.vibrate&&navigator.vibrate([200,80,200])}catch(e){}if(m)toast(m,'bad');flicker=45}
+const V=()=>+$('sv').value,R=()=>+$('sr').value;
+
+/* ---------- physics ---------- */
+function calc(){
+  const v=V(),r1=R(),r2=+$('sr2').value,r3=+$('sr3').value;let req,comps;
+  if(topo==='simple')req=r1;else if(topo==='series')req=r1+r2;else if(topo==='parallel')req=r1*r2/(r1+r2);else req=r1+r2*r3/(r2+r3);
+  const I=v/req;
+  if(topo==='simple')comps=[{n:'R',r:r1,v:v,i:I}];
+  else if(topo==='series')comps=[{n:'R₁',r:r1,v:I*r1,i:I},{n:'R₂',r:r2,v:I*r2,i:I}];
+  else if(topo==='parallel')comps=[{n:'R₁',r:r1,v:v,i:v/r1},{n:'R₂',r:r2,v:v,i:v/r2}];
+  else{const v1=I*r1,vp=v-v1;comps=[{n:'R₁',r:r1,v:v1,i:I},{n:'R₂',r:r2,v:vp,i:vp/r2},{n:'R₃',r:r3,v:vp,i:vp/r3}]}
+  return{v,r1,r2,r3,req,I,mA:I*1000,comps};
+}
+const RULES={simple:'I = V ÷ R · วงจรปิดมีทางเดินเดียว',series:'อนุกรม: I เท่ากันทุกตัว · R รวม = R₁ + R₂',parallel:'ขนาน: V เท่ากันทุกแขนง · I รวม = I₁ + I₂ · R รวม = (R₁×R₂) ÷ (R₁+R₂)',mixed:'ผสม: หา R₂∥R₃ ก่อน แล้วบวก R₁ · I รวม = V ÷ R รวม'};
+
+/* ---------- tabs ---------- */
+function switchTab(id){
+  ['game','learn','quiz'].forEach(t=>{$('tab-'+t).hidden=t!==id});
+  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.tab===id));
+  if(id==='game'){resize();drawGraph()}
+}
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
+
+/* ---------- game state ---------- */
+function setFb(t,k){fb=t;fbk=k||'';const n=$('fb');if(n){n.textContent=t;n.className='note '+(k||'')}}
+function setProg(){const n=missions[cat].length,p=phase==='done'?100:phase==='mission'?Math.round(mi/n*100):0;$('pf').style.width=p+'%';$('prog').setAttribute('aria-valuenow',p)}
+function updateClock(){
+  const m=String(Math.floor(seconds/60)).padStart(2,'0'),s=String(seconds%60).padStart(2,'0');$('clock').textContent=m+':'+s;
+  $('clock').classList.toggle('low',seconds<=30&&phase==='mission');$('tf').style.width=(seconds/total*100)+'%';$('tf').style.background=seconds<=30&&phase==='mission'?'var(--red)':'var(--amber)';
+  $('app').classList.toggle('alert',phase==='mission'&&seconds<=20&&seconds>0);
+}
+function startTimer(){clearInterval(timer);timer=setInterval(()=>{
+  if(phase!=='mission')return;seconds--;updateClock();
+  if(quakeAt.includes(seconds))quake('อาฟเตอร์ช็อก! ไฟสำรองกะพริบ');
+  if(seconds<=10&&seconds>0)sfx.tick();
+  if(seconds<=0)lose();
+},1000)}
+function lose(){clearInterval(timer);phase='timeout';on=false;$('app').classList.remove('alert');applyUI()}
+function penalty(s,why){seconds=Math.max(0,seconds-s);updateClock();sfx.bad();toast('−'+s+' วินาที · '+why,'bad');if(seconds<=0&&phase==='mission')lose()}
+
+function setupSliders(m){
+  const lk=(m&&m.lock)||{};
+  $('sv').value=lk.v!==undefined?lk.v:5;$('sr').value=lk.r1!==undefined?lk.r1:500;
+  $('sr2').value=lk.r2!==undefined?lk.r2:500;$('sr3').value=lk.r3!==undefined?lk.r3:500;
+}
+function startMission(c){
+  if(c)cat=c;clearInterval(timer);total=CATS[cat].total;seconds=total;quakeAt=[.78,.5,.22].map(f=>Math.round(total*f));
+  phase='mission';mi=0;blows=0;on=false;blown=false;busy=false;updateClock();loadMission();startTimer();quake('ไฟดับทั้งตึก! เริ่มจับเวลา');
+}
+function loadMission(){
+  const m=cur();topo=m.topo;on=false;hintUsed=false;busy=false;setupSliders(m);
+  setFb('ตั้งค่าแล้วกด "จ่ายไฟ" เพื่อทดสอบ ค่ากระแสจะแสดงหลังจ่ายไฟ');setProg();applyUI();
+}
+function pickCat(k){
+  if(phase==='mission'){startMission(k);toast('เริ่มรอบใหม่ · หมวด'+CATS[k].name,'good');return}
+  cat=k;total=CATS[k].total;seconds=total;topo=missions[k][0].topo;mi=0;phase=phase==='free'?'idle':phase;
+  if(phase==='done'||phase==='timeout')phase='idle';
+  setupSliders(missions[k][0]);on=false;blown=false;updateClock();setProg();applyUI();
+}
+function freeMode(){
+  clearInterval(timer);phase='free';on=true;blown=false;$('sv').value=12;$('sr').value=200;$('sr2').value=200;$('sr3').value=200;
+  total=180;seconds=total;updateClock();$('app').classList.remove('alert');applyUI();
+}
+function setTopo(t){if(phase!=='free')return;topo=t;sfx.on();applyUI()}
+function resetAll(){phase='idle';on=false;blown=false;mi=0;topo=missions[cat][0].topo;setupSliders(missions[cat][0]);total=CATS[cat].total;seconds=total;updateClock();$('app').classList.remove('alert');setProg();applyUI()}
+
+function powerClick(){
+  if(phase!=='mission'||busy)return;
+  if(on){on=false;applyUI();return}
+  on=true;sfx.on();const m=cur(),s=calc();
+  if(s.I>FUSE){
+    blown=true;busy=true;blows++;spark=60;sfx.zap();quake();
+    setFb('ฟิวส์ขาด! กระแสรวม '+s.mA.toFixed(0)+' mA เกิน 300 mA เพิ่ม R รวมหรือลด V แล้วลองใหม่','no');penalty(6,'ฟิวส์ขาด');
+    setTimeout(()=>{if(phase!=='mission')return;blown=false;on=false;busy=false;applyUI()},1800);
+  }else if(m.ok(s)){
+    busy=true;sfx.ok();setFb('ถูกต้อง! '+m.ex+' (I รวม = '+s.mA.toFixed(0)+' mA)','ok');toast('✅ ภารกิจ '+(mi+1)+' สำเร็จ','good');
+    const c0=cat;
+    setTimeout(()=>{if(phase!=='mission'||cat!==c0)return;mi++;setProg();if(mi>=missions[cat].length)win();else loadMission()},1700);
+  }else{
+    const msg=m.msg?m.msg(s):'I รวม = '+s.mA.toFixed(0)+' mA '+(s.mA<m.tgt?'น้อยเกินไป ลดความต้านทานรวมหรือเพิ่ม V':'มากเกินไป เพิ่มความต้านทานรวมหรือลด V');
+    setFb(msg+' (เป้าหมาย '+m.goal+')','no');penalty(2,'ค่าไม่ตรงเป้า');
+  }
+  applyUI();
+}
+function hint(){if(phase!=='mission')return;if(!hintUsed){hintUsed=true;penalty(5,'ใช้คำใบ้')}setFb('คำใบ้: '+cur().hint)}
+function win(){clearInterval(timer);phase='done';on=false;sfx.win();$('app').classList.remove('alert');applyUI()}
+
+/* ---------- UI sync ---------- */
+function catChips(){return '<div class="chips" role="group" aria-label="เลือกหมวดภารกิจ">'+Object.keys(CATS).map(k=>'<button class="chip'+(k===cat?' on':'')+'" type="button" onclick="pickCat(\''+k+'\')">'+CATS[k].name+'</button>').join('')+'</div>'}
+function applyUI(){
+  const m=(phase==='mission'&&cur())||{},active=phase==='mission'||phase==='free',lk=m.lock||{};
+  [['sv','v'],['sr','r1'],['sr2','r2'],['sr3','r3']].forEach(([id,k])=>{
+    $(id).disabled=!active||(phase==='mission'&&(lk[k]!==undefined||busy));
+    $('lk-'+id).textContent=phase==='mission'&&lk[k]!==undefined?'🔒 ล็อก':'';
+  });
+  $('row-sr2').hidden=topo==='simple';$('row-sr3').hidden=topo!=='mixed';
+  $('nm-sr').textContent=topo==='simple'?'ความต้านทาน R':'ความต้านทาน R₁';
+  $('topobar').hidden=phase!=='free';
+  $('topochips').innerHTML=Object.keys(TOPOS).map(k=>'<button class="chip'+(k===topo?' on':'')+'" type="button" onclick="setTopo(\''+k+'\')">'+TOPOS[k]+'</button>').join('');
+  $('pw').disabled=phase!=='mission'||busy;$('pw').hidden=phase==='free';
+  $('pw').textContent=on?'⏻ ตัดไฟ':'⏻ จ่ายไฟ';$('pw').classList.toggle('live',on);
+  $('hintb').disabled=phase!=='mission'||busy;$('hintb').hidden=phase==='free';
+  $('h-sw').textContent='สวิตช์: '+(on?(blown?'ฟิวส์ขาด':'จ่ายไฟ'):'ตัดไฟ');
+  $('h-topo').textContent=TOPOS[topo]+(topo==='simple'?'':'');
+  renderCard();readouts();drawGraph();setProg();
+}
+function renderCard(){
+  const c=$('mcard');let h='';const n=missions[cat].length;
+  const dots='<div class="dots">'+missions[cat].map((_,i)=>'<i class="'+(i<mi||phase==='done'?'done':i===mi&&phase==='mission'?'now':'')+'"></i>').join('')+'</div>';
+  if(phase==='idle')h='<p class="eyebrow">สัญญาณฉุกเฉิน</p><h2>ไฟดับทั้งตึก!</h2><p class="muted" style="line-height:1.7">ตั้งค่า V และ R ให้ถูกต้อง คำนวณกระแสด้วยกฎของโอห์มก่อนกดจ่ายไฟ ถ้า I รวมเกิน 300 mA ฟิวส์จะขาดและเสียเวลา เลือกหมวดที่อยากเล่นได้เลย</p><p class="eyebrow" style="margin-top:12px">เลือกหมวดภารกิจ</p>'+catChips()+'<p class="muted" style="margin:6px 0 0;font-size:.88rem">หมวด'+CATS[cat].name+' · '+n+' ภารกิจ · '+CATS[cat].total+' วินาที</p><div class="row"><button class="btn" type="button" onclick="startMission()">เริ่มหมวด'+CATS[cat].name+' →</button><button class="btn ghost" type="button" onclick="freeMode()">โหมดอิสระ</button></div>';
+  else if(phase==='mission')h='<p class="eyebrow">หมวด'+CATS[cat].name+' · ภารกิจ '+(mi+1)+' / '+n+'</p><h3 style="margin-top:6px">'+cur().t+'</h3><p style="margin:8px 0 0;color:var(--amber2)">เป้าหมาย: '+cur().goal+' · ฟิวส์ไม่เกิน 300 mA</p><p id="fb" class="note '+fbk+'" role="status">'+fb+'</p>'+dots+'<p class="muted" style="margin:12px 0 0;font-size:.82rem">สลับหมวด (เริ่มรอบใหม่)</p>'+catChips();
+  else if(phase==='free')h='<p class="eyebrow">โหมดอิสระ · ไม่จับเวลา ไม่มีฟิวส์ขาด</p><h3 style="margin-top:6px">ทดลองวงจร'+TOPOS[topo]+'</h3><p class="muted" style="line-height:1.7">เลือกชนิดวงจรจากแถบเหนือภาพวงจร แล้วปรับ V และ R ดูแรงดันกับกระแสของตัวต้านทานแต่ละตัว สังเกตว่าอนุกรมกับขนานต่างกันอย่างไร</p><div class="row"><button class="btn" type="button" onclick="resetAll()">← กลับหน้าภารกิจ</button></div>';
+  else if(phase==='done'){
+    let st=seconds>=total*.55?3:seconds>=total*.28?2:1;if(blows>=3)st=Math.max(1,st-1);
+    h='<p class="eyebrow">ผ่านหมวด'+CATS[cat].name+'แล้ว</p><h2>ไฟกลับมาแล้ว!</h2><p class="stars" aria-label="'+st+' ดาว">'+'★'.repeat(st)+'☆'.repeat(3-st)+'</p><p class="muted">เหลือเวลา '+Math.floor(seconds/60)+' นาที '+seconds%60+' วินาที · ฟิวส์ขาด '+blows+' ครั้ง</p>'+dots+'<p class="eyebrow" style="margin-top:12px">เล่นหมวดอื่นต่อ</p>'+catChips()+'<div class="row"><button class="btn" type="button" onclick="startMission()">เล่นหมวดนี้อีกครั้ง</button><button class="btn ghost" type="button" onclick="switchTab(\'quiz\')">ทำแบบทดสอบ</button><button class="btn ghost" type="button" onclick="freeMode()">โหมดอิสระ</button></div>';
+  }else h='<p class="eyebrow" style="color:var(--red)">ไฟสำรองหมด</p><h2>หมดเวลา ลองใหม่อีกครั้ง</h2><p class="muted" style="line-height:1.7">ทบทวนสูตร I = V ÷ R รวม และอย่าลืมแปลง mA เป็น A (หารด้วย 1000) ลองโหมดอิสระเพื่อดูผลของแต่ละวงจรก่อนได้</p>'+catChips()+'<div class="row"><button class="btn" type="button" onclick="startMission()">เริ่มหมวดนี้ใหม่</button><button class="btn ghost" type="button" onclick="freeMode()">โหมดอิสระ</button></div>';
+  c.innerHTML=h;
+}
+function readouts(){
+  const s=calc(),show=phase==='free'||(phase==='mission'&&on&&!blown);
+  $('lv').textContent=s.v+' V';$('lr').textContent=s.r1+' Ω';$('lr2').textContent=s.r2+' Ω';$('lr3').textContent=s.r3+' Ω';
+  $('rv').textContent=s.v;$('rr').textContent=Number.isInteger(s.req)?s.req:s.req.toFixed(1);
+  $('ri').textContent=show?(s.mA>=100?s.mA.toFixed(0):s.mA.toFixed(1)):'?';$('rp').textContent=show?(s.v*s.I).toFixed(2):'?';
+  $('detail').innerHTML=show?s.comps.map(c=>'<div><b>'+c.n+'</b> = '+c.r+' Ω · V = '+c.v.toFixed(1)+' V · I = '+(c.i*1000).toFixed(0)+' mA</div>').join(''):'<div class="muted">จ่ายไฟเพื่อดูแรงดันและกระแสของตัวต้านทานแต่ละตัว</div>';
+  $('rule').textContent=RULES[topo];
+}
+function onSlide(){if(phase==='mission'&&on&&!busy)on=false;applyUI()}
+['sv','sr','sr2','sr3'].forEach(id=>$(id).oninput=onSlide);$('pw').onclick=powerClick;$('hintb').onclick=hint;
+
+/* ---------- canvas circuit ---------- */
+const cc=$('cc'),ctx=cc.getContext('2d'),gc=$('gc'),gx=gc.getContext('2d');
+let W=600,H=360,dpr=1,last=performance.now();const offs=[];
+function resize(){
+  const w=cc.parentElement.getBoundingClientRect().width;if(!w)return;
+  dpr=Math.min(devicePixelRatio||1,2);W=w;H=Math.round(w<520?w*.9:w*.58);
+  cc.style.height=H+'px';cc.width=W*dpr;cc.height=H*dpr;
+  const gw=gc.getBoundingClientRect().width||300;gc.style.height='170px';gc.width=gw*dpr;gc.height=170*dpr;
+}
+window.addEventListener('resize',()=>{if(!$('tab-game').hidden){resize();drawGraph()}});
+const lerp=(a,b,t)=>Math.round(a+(b-a)*t);
+function drawCircuit(now){
+  const dt=Math.min((now-last)/1000,.05);last=now;
+  ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);
+  const s=calc(),live=on&&!blown&&(phase==='mission'||phase==='free'),over=s.I>FUSE;
+  const mrg=W<520?56:70,x0=mrg,x1=W-mrg,y0=62,y1=H-58,cy=(y0+y1)/2,cx=(x0+x1)/2,w=x1-x0,bg='#0b1b2a',rl=W<520?64:92;
+  const xa=topo==='mixed'?x0+w*.6:cx,xb=x1;
+  const ia=topo==='parallel'?s.comps[0].i:topo==='mixed'?s.comps[1].i:0,ib=topo==='parallel'?s.comps[1].i:topo==='mixed'?s.comps[2].i:0;
+  const I={T:s.I,b1:ia,b2:ib};
+  const segs=(topo==='simple'||topo==='series')?[[x0,y0,x1,y0,'T'],[x1,y0,x1,y1,'T'],[x1,y1,x0,y1,'T'],[x0,y1,x0,y0,'T']]
+   :[[x0,y0,xa,y0,'T'],[xa,y0,xb,y0,'b2'],[xa,y0,xa,y1,'b1'],[xb,y0,xb,y1,'b2'],[xb,y1,xa,y1,'b2'],[xa,y1,x0,y1,'T'],[x0,y1,x0,y0,'T']];
+  ctx.lineCap='round';ctx.lineJoin='round';
+  const stroke=()=>segs.forEach(g=>{ctx.beginPath();ctx.moveTo(g[0],g[1]);ctx.lineTo(g[2],g[3]);ctx.stroke()});
+  ctx.strokeStyle='#3b6177';ctx.lineWidth=6;stroke();
+  if(live){ctx.strokeStyle='rgba(92,225,242,.35)';ctx.lineWidth=3;stroke()}
+  ctx.textAlign='center';
+  // battery
+  ctx.fillStyle=bg;ctx.fillRect(x0-16,cy-28,32,56);
+  ctx.strokeStyle='#ffb938';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(x0-16,cy-12);ctx.lineTo(x0+16,cy-12);ctx.stroke();
+  ctx.strokeStyle='#5ce1f2';ctx.lineWidth=8;ctx.beginPath();ctx.moveTo(x0-9,cy+6);ctx.lineTo(x0+9,cy+6);ctx.stroke();
+  ctx.fillStyle='#ffb938';ctx.font='bold 14px Kanit';ctx.textAlign='left';ctx.fillText('+',x0+22,cy-8);ctx.fillStyle='#5ce1f2';ctx.fillText('−',x0+22,cy+14);
+  ctx.fillStyle='#f2f6f4';ctx.textAlign='center';ctx.font='600 13px Kanit';ctx.fillText(s.v+' V',x0,cy+46);
+  // switch
+  const swx=topo==='simple'||topo==='series'?x0+(cx-x0)/2:topo==='parallel'?x0+(xa-x0)/2:x0+(xa-x0)*.22;
+  ctx.fillStyle=bg;ctx.fillRect(swx-26,y1-9,52,18);
+  ctx.fillStyle='#cfe3ec';[swx-24,swx+24].forEach(x=>{ctx.beginPath();ctx.arc(x,y1,4,0,7);ctx.fill()});
+  ctx.strokeStyle=on?'#7be0b0':'#ff8a80';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(swx-24,y1);ctx.lineTo(on?swx+24:swx+16,on?y1:y1-26);ctx.stroke();
+  ctx.fillStyle='#a9c0cc';ctx.font='12px Kanit';ctx.textAlign='center';ctx.fillText('สวิตช์',swx,y1+26);
+  // fuse
+  const fuse=(x,y,hz,ly)=>{
+    ctx.save();ctx.translate(x,y);if(hz)ctx.rotate(Math.PI/2);
+    ctx.fillStyle=bg;ctx.fillRect(-14,-34,28,68);ctx.strokeStyle='#9fb6c2';ctx.lineWidth=3;ctx.strokeRect(-10,-30,20,60);
+    ctx.strokeStyle=blown?'#ff5a4f':over&&live?'#ff9a7a':'#cfe3ec';ctx.beginPath();
+    if(blown){ctx.moveTo(0,-30);ctx.lineTo(0,-6);ctx.moveTo(0,6);ctx.lineTo(0,30)}else{ctx.moveTo(0,-30);ctx.lineTo(0,30)}ctx.stroke();ctx.restore();
+    if(spark>0){ctx.strokeStyle='#fff3c4';ctx.lineWidth=2;for(let k=0;k<7;k++){const a=Math.random()*6.28,l=10+Math.random()*26;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+Math.cos(a)*l,y+Math.sin(a)*l);ctx.stroke()}}
+    ctx.fillStyle=blown?'#ff5a4f':'#a9c0cc';ctx.font='12px Kanit';ctx.textAlign='center';ctx.fillText(blown?'ฟิวส์ขาด!':'ฟิวส์',x,ly);
+  };
+  if(topo==='simple'||topo==='series')fuse(x1,cy,false,cy+50);
+  else if(topo==='parallel')fuse(x0+(xa-x0)/2,y0,true,y0-24);
+  else fuse(x0+(xa-x0)*.75,y1,true,y1+34);
+  if(spark>0)spark--;
+  // resistor
+  const res=(x,y,hz,c,lab,below)=>{
+    const pw=c.v*c.i,heat=live?Math.min(pw/(topo==='simple'?3:1.5),1):0;
+    ctx.save();ctx.translate(x,y);if(!hz)ctx.rotate(Math.PI/2);
+    ctx.fillStyle=bg;ctx.fillRect(-rl/2-2,-11,rl+4,22);
+    ctx.strokeStyle='rgb('+lerp(255,255,heat)+','+lerp(185,70,heat)+','+lerp(56,58,heat)+')';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(-rl/2,0);
+    const n=6,st=(rl-12)/n;for(let k=0;k<n;k++)ctx.lineTo(-rl/2+6+(k+.5)*st,k%2?8:-8);ctx.lineTo(rl/2,0);ctx.stroke();ctx.restore();
+    if(heat>.3){const g=ctx.createRadialGradient(x,y,4,x,y,48);g.addColorStop(0,'rgba(255,80,50,'+heat*.4+')');g.addColorStop(1,'rgba(255,80,50,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,48,0,7);ctx.fill()}
+    ctx.fillStyle='#a9c0cc';ctx.font='12px Kanit';
+    if(hz){ctx.textAlign='center';const l1=lab+' = '+c.r+' Ω',l2=live?(c.i*1000).toFixed(0)+' mA · '+c.v.toFixed(1)+' V':'';
+      if(below){ctx.fillText(l1,x,y+26);if(l2)ctx.fillText(l2,x,y+40)}else{ctx.fillText(l1,x,y-32);if(l2)ctx.fillText(l2,x,y-18)}}
+    else{ctx.textAlign='left';ctx.fillText(lab,x+14,y-10);ctx.fillText(c.r+' Ω',x+14,y+4);if(live)ctx.fillText((c.i*1000).toFixed(0)+' mA',x+14,y+18)}
+  };
+  if(topo==='simple'){
+    let b=live?Math.min(s.v*s.I/2.2,1):0;if(flicker>0){flicker--;b*=Math.random()*.7}
+    if(b>0){const g=ctx.createRadialGradient(cx,y0,6,cx,y0,40+110*b);g.addColorStop(0,'rgba(255,214,110,'+(.55*b+.1)+')');g.addColorStop(1,'rgba(255,214,110,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(cx,y0,40+110*b,0,7);ctx.fill()}
+    ctx.fillStyle=bg;ctx.fillRect(cx-24,y0-12,48,24);
+    ctx.beginPath();ctx.arc(cx,y0,22,0,7);ctx.fillStyle=b>0.02?'rgb(255,'+lerp(190,245,b)+','+lerp(90,170,b)+')':'#27394a';ctx.fill();
+    ctx.lineWidth=3;ctx.strokeStyle=b>0.02?'#fff1b5':'#6b8190';ctx.stroke();
+    ctx.strokeStyle='#5b3d05';ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(cx-10,y0+7);ctx.quadraticCurveTo(cx-5,y0-10,cx,y0+4);ctx.quadraticCurveTo(cx+5,y0-10,cx+10,y0+7);ctx.stroke();
+    if(b>.55){ctx.strokeStyle='rgba(255,241,181,'+(b*.8)+')';ctx.lineWidth=2;for(let k=0;k<8;k++){const a=k*Math.PI/4;ctx.beginPath();ctx.moveTo(cx+Math.cos(a)*30,y0+Math.sin(a)*30);ctx.lineTo(cx+Math.cos(a)*(38+b*10),y0+Math.sin(a)*(38+b*10));ctx.stroke()}}
+    ctx.fillStyle='#a9c0cc';ctx.font='12px Kanit';ctx.textAlign='center';ctx.fillText('หลอดไฟ',cx,y0-30);
+    res(cx,y1,true,s.comps[0],'R',true);
+  }else if(topo==='series'){
+    res(cx,y0,true,s.comps[0],'R₁',false);res(cx,y1,true,s.comps[1],'R₂',true);
+  }else if(topo==='parallel'){
+    res(xa,cy,false,s.comps[0],'R₁');res(xb,cy,false,s.comps[1],'R₂');
+  }else{
+    res(x0+(xa-x0)*.5,y0,true,s.comps[0],'R₁',false);res(xa,cy,false,s.comps[1],'R₂');res(xb,cy,false,s.comps[2],'R₃');
+  }
+  if(flicker>0&&topo!=='simple')flicker--;
+  // current dots
+  if(live){
+    ctx.fillStyle='#ffe28a';ctx.shadowColor='#ffb938';ctx.shadowBlur=8;
+    segs.forEach((g,j)=>{
+      const len=Math.hypot(g[2]-g[0],g[3]-g[1]),n=Math.max(2,Math.round(len/26)),d=len/n,cI=I[g[4]];
+      offs[j]=((offs[j]||0)+dt*(30+Math.min(cI,1.5)*170))%len;
+      for(let k=0;k<n;k++){const t=((k*d+offs[j])%len)/len;ctx.beginPath();ctx.arc(g[0]+(g[2]-g[0])*t,g[1]+(g[3]-g[1])*t,3,0,7);ctx.fill()}
+    });
+    ctx.shadowBlur=0;
+  }
+}
+function drawGraph(){
+  const w=gc.width/dpr,h=gc.height/dpr;gx.setTransform(dpr,0,0,dpr,0,0);gx.clearRect(0,0,w,h);
+  const pl=38,pr=10,pt=10,pb=26,ymax=400,xmax=24,X=v=>pl+(v/xmax)*(w-pl-pr),Y=i=>h-pb-(Math.min(i,ymax)/ymax)*(h-pt-pb);
+  gx.strokeStyle='#2f5068';gx.lineWidth=1;gx.fillStyle='#a9c0cc';gx.font='11px Kanit';gx.textAlign='right';
+  [0,100,200,300,400].forEach(y=>{gx.beginPath();gx.moveTo(pl,Y(y));gx.lineTo(w-pr,Y(y));gx.stroke();gx.fillText(y,pl-5,Y(y)+4)});
+  gx.textAlign='center';[0,6,12,18,24].forEach(x=>gx.fillText(x,X(x),h-8));
+  gx.fillText('V (โวลต์)',w/2+10,h-0);
+  gx.strokeStyle='#ff5a4f';gx.setLineDash([5,4]);gx.beginPath();gx.moveTo(pl,Y(300));gx.lineTo(w-pr,Y(300));gx.stroke();gx.setLineDash([]);
+  const req=calc().req;gx.strokeStyle='#5ce1f2';gx.lineWidth=2.5;gx.beginPath();
+  for(let v=0;v<=xmax;v+=.5){const i=v/req*1000;if(v===0)gx.moveTo(X(v),Y(i));else gx.lineTo(X(v),Y(i))}gx.stroke();
+  const showPt=phase==='free'||(phase==='mission'&&on);
+  gx.fillStyle=showPt?'#ffb938':'#6b8190';gx.beginPath();gx.arc(X(V()),Y(V()/req*1000),6,0,7);gx.fill();
+}
+function loop(t){if(!$('tab-game').hidden)drawCircuit(t);else last=t;requestAnimationFrame(loop)}
+
+/* ---------- hand control (MediaPipe Hands) ---------- */
+let handOn=false,hands=null,stream=null,smV=null,smR=null,smR2=null,fistSince=0,lastFlip=0;
+const CONN=[[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],[9,13],[13,14],[14,15],[15,16],[13,17],[17,18],[18,19],[19,20],[0,17]];
+function loadScript(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.crossOrigin='anonymous';s.onload=res;s.onerror=()=>rej(new Error('load'));document.head.appendChild(s)})}
+async function toggleHand(){
+  if(handOn){stopHand();return}
+  $('handbox').hidden=false;$('hstat').textContent='กำลังเริ่มกล้อง...';$('handb').textContent='🖐 ปิดการควบคุมด้วยมือ';
+  try{
+    if(!window.Hands)await loadScript('https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js');
+    stream=await navigator.mediaDevices.getUserMedia({video:{width:480,height:360,facingMode:'user'}});
+    const vid=$('hv');vid.srcObject=stream;await vid.play();
+    hands=new Hands({locateFile:f=>'https://cdn.jsdelivr.net/npm/@mediapipe/hands/'+f});
+    hands.setOptions({maxNumHands:1,modelComplexity:0,minDetectionConfidence:.6,minTrackingConfidence:.5});
+    hands.onResults(onHand);handOn=true;smV=smR=smR2=null;
+    (async function lp(){if(!handOn)return;if(vid.readyState>=2){try{await hands.send({image:vid})}catch(e){}}requestAnimationFrame(lp)})();
+    $('hstat').textContent='ชูมือหน้ากล้อง';
+  }catch(e){toast('เปิดกล้องไม่ได้ ใช้สไลเดอร์แทนได้','bad');stopHand()}
+}
+function stopHand(){
+  handOn=false;if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}
+  try{hands&&hands.close()}catch(e){}hands=null;$('handbox').hidden=true;$('handb').textContent='🖐 ควบคุมด้วยมือ';
+}
+$('handb').onclick=toggleHand;
+function onHand(res){
+  const c=$('hc'),g=c.getContext('2d');g.clearRect(0,0,c.width,c.height);
+  const lm=res.multiHandLandmarks&&res.multiHandLandmarks[0];
+  if(!lm){$('hstat').textContent='ไม่พบมือ ชูมือหน้ากล้อง';fistSince=0;return}
+  g.strokeStyle='#7be0b0';g.lineWidth=2;CONN.forEach(([a,b])=>{g.beginPath();g.moveTo(lm[a].x*c.width,lm[a].y*c.height);g.lineTo(lm[b].x*c.width,lm[b].y*c.height);g.stroke()});
+  g.fillStyle='#ffb938';lm.forEach(p=>{g.beginPath();g.arc(p.x*c.width,p.y*c.height,3,0,7);g.fill()});
+  const folded=[[8,6],[12,10],[16,14],[20,18]].filter(([t,p])=>lm[t].y>lm[p].y).length,fist=folded>=4,now=performance.now();
+  if(fist){
+    if(!fistSince)fistSince=now;
+    $('hstat').textContent='✊ กำลังกำหมัด... ค้างไว้เพื่อสลับสวิตช์';
+    if(now-fistSince>700&&now-lastFlip>1600){lastFlip=now;fistSince=now;if(phase==='mission')powerClick()}
+    return;
+  }
+  fistSince=0;
+  const palm=Math.hypot(lm[0].x-lm[9].x,lm[0].y-lm[9].y)||.1,pinch=Math.hypot(lm[4].x-lm[8].x,lm[4].y-lm[8].y)/palm;
+  const tv=1+Math.min(Math.max((pinch-.15)/1.05,0),1)*23,tr=10+Math.min(Math.max(((1-lm[9].x)-.15)/.7,0),1)*990,tr2=10+Math.min(Math.max((1-lm[9].y-.2)/.6,0),1)*990;
+  smV=smV==null?tv:smV*.7+tv*.3;smR=smR==null?tr:smR*.7+tr*.3;smR2=smR2==null?tr2:smR2*.7+tr2*.3;
+  const nv=Math.round(smV),nr=Math.round(smR/10)*10,nr2=Math.round(smR2/10)*10;let ch=false;
+  if(!$('sv').disabled&&nv!==V()){$('sv').value=nv;ch=true}
+  if(!$('sr').disabled&&nr!==R()){$('sr').value=nr;ch=true}
+  if(topo!=='simple'&&!$('sr2').disabled&&nr2!==+$('sr2').value){$('sr2').value=nr2;ch=true}
+  if(ch)onSlide();
+  $('hstat').textContent='V ≈ '+V()+' V · R₁ ≈ '+R()+' Ω'+(topo!=='simple'?' · R₂ ≈ '+$('sr2').value+' Ω':'');
+}
+
+/* ---------- quiz ---------- */
+const quiz=[
+ {q:'ข้อใดคือใจความสำคัญของกฎของโอห์ม?',o:['กระแสไฟฟ้าแปรผันตรงกับความต่างศักย์ และแปรผกผันกับความต้านทาน','กระแสไฟฟ้าแปรผันตรงกับความต้านทาน และแปรผกผันกับความต่างศักย์','ความต่างศักย์แปรผันตรงกับกระแสไฟฟ้าและความต้านทานพร้อมกัน','ความต้านทานมีค่าเปลี่ยนแปลงตลอดเวลาตามกระแสไฟฟ้า'],a:0,e:'จาก I = V/R กระแสไฟฟ้า (I) แปรผันตรงกับความต่างศักย์ (V) และแปรผกผันกับความต้านทาน (R)'},
+ {q:'วงจรมีความต่างศักย์ 12 โวลต์ และความต้านทาน 400 โอห์ม จะมีกระแสไฟฟ้าไหลผ่านเท่าใด?',o:['0.03 แอมแปร์ (30 มิลลิแอมแปร์)','0.30 แอมแปร์ (300 มิลลิแอมแปร์)','4.80 แอมแปร์','3.33 แอมแปร์'],a:0,e:'I = V ÷ R = 12 ÷ 400 = 0.03 A = 30 mA'},
+ {q:'ถ้าเพิ่มความต้านทานในวงจรโดยความต่างศักย์คงที่ กระแสไฟฟ้าจะเป็นอย่างไร?',o:['เพิ่มขึ้น','เท่าเดิม','ลดลง','หลอดไฟสว่างจ้าขึ้นทันที'],a:2,e:'R เพิ่มขึ้น (V คงที่) ทำให้ I ลดลง ตามความสัมพันธ์แปรผกผัน'},
+ {q:'เครื่องมือใดต่อแบบอนุกรมเพื่อวัดกระแสไฟฟ้าในวงจร?',o:['โวลต์มิเตอร์','แอมมิเตอร์','โอห์มมิเตอร์','เทอร์โมมิเตอร์'],a:1,e:'แอมมิเตอร์วัดกระแสและต้องต่อแบบอนุกรม ส่วนโวลต์มิเตอร์ต่อแบบขนาน'},
+ {q:'ตัวต้านทาน 100 Ω สองตัวต่อขนานกัน ความต้านทานรวมเท่าใด?',o:['200 Ω','100 Ω','50 Ω','25 Ω'],a:2,e:'R รวม = (100 × 100) ÷ (100 + 100) = 50 Ω ต่อขนานแล้วความต้านทานรวมน้อยกว่าตัวที่น้อยที่สุด'}];
+function loadQuiz(){
+  $('qscore').hidden=true;
+  $('qbox').innerHTML=quiz.map((q,n)=>'<div class="card q"><h3>ข้อ '+(n+1)+': '+q.q+'</h3><div class="opts">'+q.o.map((t,k)=>'<label class="opt"><input type="radio" name="q'+n+'" value="'+k+'"><span>'+t+'</span></label>').join('')+'</div><div class="exp" id="ex'+n+'"><b>เฉลย:</b> '+q.e+'</div></div>').join('');
+}
+function submitQuiz(){
+  let s=0;
+  quiz.forEach((q,n)=>{
+    const sel=document.querySelector('input[name="q'+n+'"]:checked'),labels=document.querySelectorAll('input[name="q'+n+'"]');
+    $('ex'+n).style.display='block';labels[q.a].closest('.opt').classList.add('good');
+    if(sel&&+sel.value===q.a)s++;else if(sel)sel.closest('.opt').classList.add('bad');
+  });
+  const b=$('qscore');b.hidden=false;b.textContent='คะแนน '+s+' / 5 '+(s===5?'🏆 เยี่ยมมาก!':s>=3?'👍 ดี':'ทบทวนบทเรียนอีกครั้ง');
+  if(s>=3)sfx.ok();window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ---------- init ---------- */
+loadQuiz();resize();setupSliders(missions.basic[0]);updateClock();applyUI();requestAnimationFrame(loop);
+</script>
+<script>
+/* ส่วนเสริมหมวด 'ฝึกต่อวงจร' · วางไฟล์นี้ไว้โฟลเดอร์เดียวกับไฟล์เกม */
+(function(){try{
+if(!document.querySelector('.cwrap')||typeof applyUI!=='function'){document.body.insertAdjacentHTML('afterbegin','<p style="font:16px sans-serif;padding:16px;background:#fff3cd;color:#000">ไฟล์นี้เป็นส่วนเสริม เปิดเดี่ยว ๆ ไม่ได้ ให้คัดลอกบล็อก &lt;script&gt; ไปวางในไฟล์เกมเดิมของคุณ ก่อน &lt;/body&gt;</p>');return}
+/* ---------- CSS ---------- */
+const st=document.createElement('style');
+st.textContent='.tray{display:flex;gap:8px;flex-wrap:wrap;min-height:78px;padding:8px;border:2px dashed #47697f;border-radius:14px;margin-bottom:10px;background:#0b1b2a;align-items:center}'
++'.part{touch-action:none;user-select:none;cursor:grab;display:flex;flex-direction:column;align-items:center;gap:2px;width:84px;padding:6px 4px;border:1px solid #47697f;border-radius:12px;background:#173247;color:var(--text);font:600 .74rem Kanit}'
++'.part span{font-size:1.8rem;line-height:1.1}.part.sel{border-color:var(--amber);box-shadow:0 0 0 2px var(--amber)}'
++'#ghost{position:fixed;z-index:120;pointer-events:none;font-size:2.6rem;transform:translate(-50%,-50%);display:none;filter:drop-shadow(0 6px 8px #000a)}#bc{touch-action:none}';
+document.head.appendChild(st);
+
+/* ---------- DOM ---------- */
+const cw=document.querySelector('.cwrap');cw.id='cw';
+const bb=document.createElement('div');bb.id='buildbox';bb.hidden=true;
+bb.innerHTML='<p class="eyebrow" style="margin:0 0 6px">กล่องอุปกรณ์ · ลากไปวางในช่องบนวงจร (หรือแตะอุปกรณ์แล้วแตะช่อง)</p><div id="tray" class="tray"></div><div class="cwrap"><canvas id="bc" aria-label="พื้นที่ต่อวงจร ลากอุปกรณ์มาวางในช่อง"></canvas></div>';
+cw.before(bb);
+const si=document.createElement('div');si.className='sl';si.id='row-si';si.hidden=true;
+si.innerHTML='<label for="sI"><span>กระแสไฟ I <span class="lk">(ปรับแล้ว R เปลี่ยนตาม)</span></span><b id="li">30 mA</b></label><input id="sI" type="range" min="10" max="400" step="5" value="30">';
+$('row-sr3').before(si);
+const gh=document.createElement('div');gh.id='ghost';document.body.appendChild(gh);
+
+/* ---------- state ---------- */
+const bc=$('bc'),bx=bc.getContext('2d'),boff=[];
+let bW=600,bH=300,bslots=[null,null,null,null],bsel=null,bdrag=null,bnT='',bnK='';
+const BN0='ลากอุปกรณ์จากกล่องไปวางในช่องบนวงจรให้ครบ 4 ช่อง';
+const PARTS={bat:{ic:'🔋',nm:'ถ่าน'},bulb:{ic:'💡',nm:'หลอดไฟ'},w1:{ic:'➰',nm:'สายไฟ'},w2:{ic:'➰',nm:'สายไฟ'},ers:{ic:'🧽',nm:'ยางลบ (ฉนวน)'}};
+
+function bcheck(){const e=bslots.filter(x=>!x).length;
+ if(e)return{ok:0,m:'ยังมีช่องว่าง '+e+' ช่อง วงจรยังไม่ครบวง กระแสไฟฟ้าไหลไม่ได้'};
+ if(bslots.includes('ers'))return{ok:0,m:'ยางลบเป็นฉนวน กระแสไหลผ่านไม่ได้ วงจรจึงขาด ลองเปลี่ยนเป็นสายไฟ (ตัวนำ)'};
+ if(!bslots.includes('bat'))return{ok:0,m:'ไม่มีถ่าน จึงไม่มีแหล่งจ่ายไฟ'};
+ if(!bslots.includes('bulb'))return{ok:0,m:'ไม่มีหลอดไฟในวงจร'};
+ return{ok:1,m:'ต่อวงจรครบแล้ว! กดปุ่ม "ดูผลวงจร" ได้เลย'}}
+function blive(s){const p=s.v*s.I,l=p<.3?'สลัว':p<1.2?'สว่างปานกลาง':'สว่างมาก';
+ return 'วงจรปิด กระแสไหลแล้ว! I = V ÷ R = '+s.v+' ÷ '+s.r1+' = '+s.mA.toFixed(0)+' mA · หลอดไฟ'+l+' (P = '+p.toFixed(2)+' W) ลองเลื่อนแถบ V, R หรือ I ดูผลทันที'}
+
+/* ---------- mode control ---------- */
+function buildMode(){
+ clearInterval(timer);phase='build';topo='simple';on=false;blown=false;busy=false;bsel=null;bslots=[null,null,null,null];bnT=BN0;bnK='';
+ $('sv').value=6;$('sr').value=200;$('app').classList.remove('alert');
+ applyUI();resize();updateClock();$('clock').textContent='∞';$('clock').classList.remove('low');
+}
+function bclear(){bslots=[null,null,null,null];bsel=null;on=false;blown=false;bnT=BN0;bnK='';applyUI()}
+function bchg(){on=false;blown=false;const r=bcheck();bnT=r.m;bnK=r.ok?'ok':'';sfx.on();if(r.ok)toast('✅ ต่อวงจรครบแล้ว','good');applyUI()}
+function bslide(){
+ if(!bcheck().ok){applyUI();return}
+ const s=calc();
+ if(on&&s.I>FUSE){on=false;blown=true;spark=60;sfx.zap();bnT='กระแส '+s.mA.toFixed(0)+' mA เกิน 300 mA ฟิวส์ขาด! ลด V หรือเพิ่ม R แล้วกด "ดูผลวงจร" ใหม่';bnK='no'}
+ else if(on){bnT=blive(s);bnK='ok'}
+ else if(blown){blown=false;bnT='ปรับค่าแล้ว กด "ดูผลวงจร" อีกครั้ง';bnK=''}
+ applyUI();
+}
+function buildPower(){
+ const r=bcheck();
+ if(on){on=false;bnT='ตัดไฟแล้ว วงจรเปิด กระแสเป็นศูนย์';bnK='';applyUI();return}
+ if(!r.ok){bnT=r.m;bnK='no';sfx.bad();toast('วงจรยังไม่ทำงาน','bad');applyUI();return}
+ blown=false;on=true;sfx.on();bslide();
+}
+function syncI(){const m=calc().mA,e=$('sI');if(document.activeElement!==e)e.value=Math.min(400,Math.max(10,Math.round(m/5)*5));$('li').textContent=m.toFixed(0)+' mA'}
+function renderTray(){
+ const free=Object.keys(PARTS).filter(k=>!bslots.includes(k));
+ $('tray').innerHTML=free.length?free.map(k=>'<button type="button" class="part'+(bsel===k?' sel':'')+'" data-id="'+k+'" aria-label="'+PARTS[k].nm+'"><span>'+PARTS[k].ic+'</span>'+PARTS[k].nm+'</button>').join(''):'<span class="muted" style="padding:10px;font-size:.85rem">วางอุปกรณ์ครบแล้ว · ลากกลับมาที่กล่องนี้เพื่อถอดออก</span>';
+}
+function buildCard(){
+ return '<p class="eyebrow">หมวดฝึกต่อวงจร · ไม่จับเวลา</p><h2>ต่อวงจรไฟฟ้าอย่างง่าย</h2><p class="muted" style="line-height:1.7">① ลากถ่าน หลอดไฟ และสายไฟไปวางในช่องว่างให้ครบวง ② กด "ดูผลวงจร" ③ ปรับ V, R หรือ I แล้วดูผลทันที ลากอุปกรณ์สลับตำแหน่งหรือลากกลับกล่องได้ ลองวางยางลบดูว่าเกิดอะไรขึ้น</p><p class="note '+bnK+'" role="status">'+bnT+'</p><p class="eyebrow" style="margin-top:12px">เปลี่ยนหมวด</p>'+catChips()+'<div class="row"><button class="btn ghost" type="button" onclick="bclear()">↺ ล้างวงจร</button><button class="btn ghost" type="button" onclick="resetAll()">← กลับหน้าภารกิจ</button></div>';
+}
+
+/* ---------- wrap existing functions ---------- */
+const _apply=applyUI;applyUI=function(){
+ _apply();const b=phase==='build';
+ $('buildbox').hidden=!b;$('cw').hidden=b;$('row-si').hidden=!b;
+ if(b){['sv','sr'].forEach(id=>$(id).disabled=false);$('pw').disabled=false;$('pw').hidden=false;$('hintb').hidden=true;
+  $('pw').textContent=on?'⏻ ตัดไฟ':'▶ ดูผลวงจร';renderTray()}
+};
+const _ro=readouts;readouts=function(){const p=phase;if(p==='build'&&on&&!blown)phase='free';try{_ro()}finally{phase=p}if(p==='build')syncI()};
+const _dg=drawGraph;drawGraph=function(){const p=phase;if(p==='build'&&on)phase='free';try{_dg()}finally{phase=p}};
+const _rc=renderCard;renderCard=function(){if(phase==='build')$('mcard').innerHTML=buildCard();else _rc()};
+const _cc=catChips;catChips=function(){let h=_cc();const b=phase==='build';if(b)h=h.replace(/chip on/g,'chip');
+ return h.replace(/<\/div>$/,'<button class="chip'+(b?' on':'')+'" type="button" onclick="buildMode()">🔧 ฝึกต่อวงจร</button></div>')};
+const _pc=powerClick;powerClick=function(){if(phase==='build')buildPower();else _pc()};$('pw').onclick=powerClick;
+const _os=onSlide;onSlide=function(){if(phase==='build')bslide();else _os()};
+['sv','sr','sr2','sr3'].forEach(id=>$(id).oninput=onSlide);
+const _pk=pickCat;pickCat=function(k){if(phase==='build'){phase='idle';on=false;blown=false}_pk(k)};
+const _dc=drawCircuit;drawCircuit=function(t){if(phase==='build')drawBuild(t);else _dc(t)};
+const _rs=resize;resize=function(){dpr=Math.min(devicePixelRatio||1,2);const w=bc.parentElement.getBoundingClientRect().width;
+ if(w){bW=w;bH=Math.round(w<520?w*.8:w*.5);bc.style.height=bH+'px';bc.width=bW*dpr;bc.height=bH*dpr}_rs()};
+$('sI').oninput=()=>{const i=+$('sI').value/1000;$('sr').value=Math.min(1000,Math.max(10,Math.round(V()/i/10)*10));onSlide()};
+window.buildMode=buildMode;window.bclear=bclear;
+
+/* ---------- drag & drop ---------- */
+function bgeo(){const m=bW<520?60:80,x0=m,x1=bW-m,y0=54,y1=bH-54,cx=(x0+x1)/2,cy=(y0+y1)/2;return{x0,x1,y0,y1,cx,cy,sl:[[cx,y0,1],[x1,cy,0],[cx,y1,1],[x0,cy,0]]}}
+function bslotAt(e){const r=bc.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top,g=bgeo();let b=-1,d=50;
+ g.sl.forEach((p,i)=>{const k=Math.hypot(p[0]-x,p[1]-y);if(k<d){d=k;b=i}});return b}
+function bplace(id,from,s){
+ if(s>=0&&s===from){applyUI();return}
+ if(from>=0)bslots[from]=null;
+ if(s>=0){const o=bslots[s];bslots[s]=id;if(o&&from>=0)bslots[from]=o}
+ bsel=null;bchg();
+}
+$('tray').addEventListener('pointerdown',e=>{const b=e.target.closest('.part');if(b&&e.button===0){e.preventDefault();bdrag={id:b.dataset.id,from:-1,src:'t',moved:false,x:e.clientX,y:e.clientY}}});
+bc.addEventListener('pointerdown',e=>{if(phase!=='build'||e.button!==0)return;e.preventDefault();const s=bslotAt(e);if(s<0)return;bdrag={id:bslots[s],from:s,src:'c',moved:false,x:e.clientX,y:e.clientY}});
+document.addEventListener('pointermove',e=>{const d=bdrag;if(!d||!d.id)return;
+ if(!d.moved&&Math.hypot(e.clientX-d.x,e.clientY-d.y)>6){d.moved=true;gh.textContent=PARTS[d.id].ic;gh.style.display='block'}
+ if(d.moved){gh.style.left=e.clientX+'px';gh.style.top=e.clientY+'px'}});
+document.addEventListener('pointerup',e=>{const d=bdrag;if(!d)return;bdrag=null;gh.style.display='none';
+ if(d.moved){bplace(d.id,d.from,bslotAt(e));return}
+ if(d.src==='t'){bsel=bsel===d.id?null:d.id;applyUI();return}
+ const s=bslotAt(e);if(s<0)return;
+ if(bsel)bplace(bsel,-1,s);else if(bslots[s]){bsel=bslots[s];bslots[s]=null;bchg()}
+});
+document.addEventListener('pointercancel',()=>{bdrag=null;gh.style.display='none'});
+
+/* ---------- drawing ---------- */
+function partDraw(id,live,b,bl){
+ const x=bx;x.lineCap='round';
+ if(!id){x.setLineDash([5,4]);x.strokeStyle='#6b8190';x.lineWidth=2;x.strokeRect(-44,-19,88,38);x.setLineDash([]);x.fillStyle='#6b8190';x.font='600 18px Kanit';x.textAlign='center';x.fillText('+',0,6);return}
+ if(id==='ers'){x.fillStyle='#f3a6b8';x.strokeStyle='#fff';x.lineWidth=2;x.fillRect(-30,-15,60,30);x.strokeRect(-30,-15,60,30);return}
+ x.strokeStyle=live?'#d9923f':'#7a8f9c';x.lineWidth=6;x.beginPath();x.moveTo(-46,0);x.lineTo(46,0);x.stroke();
+ if(id[0]==='w'){x.strokeStyle='rgba(255,230,170,.55)';x.lineWidth=2;x.beginPath();x.moveTo(-46,0);x.lineTo(46,0);x.stroke()}
+ else if(id==='bat'){x.fillStyle='#12293a';x.strokeStyle='#47697f';x.lineWidth=2;x.fillRect(-26,-19,52,38);x.strokeRect(-26,-19,52,38);
+  x.strokeStyle='#ffb938';x.lineWidth=4;x.beginPath();x.moveTo(-9,-14);x.lineTo(-9,14);x.stroke();
+  x.strokeStyle='#5ce1f2';x.lineWidth=7;x.beginPath();x.moveTo(9,-7);x.lineTo(9,7);x.stroke()}
+ else if(id==='bulb'){const lit=!bl&&b>.02;x.beginPath();x.arc(0,0,21,0,7);x.fillStyle=lit?'rgb(255,'+lerp(190,245,b)+','+lerp(90,170,b)+')':'#27394a';x.fill();
+  x.lineWidth=3;x.strokeStyle=lit?'#fff1b5':'#6b8190';x.stroke();
+  x.strokeStyle=bl?'#ff5a4f':lit?'#5b3d05':'#9fb6c2';x.lineWidth=2.5;x.beginPath();
+  if(bl){x.moveTo(-10,6);x.lineTo(-3,-3);x.moveTo(3,-3);x.lineTo(10,6)}else{x.moveTo(-10,7);x.quadraticCurveTo(-5,-10,0,4);x.quadraticCurveTo(5,-10,10,7)}x.stroke()}
+}
+function drawBuild(now){
+ const dt=Math.min((now-last)/1000,.05);last=now;
+ bx.setTransform(dpr,0,0,dpr,0,0);bx.clearRect(0,0,bW,bH);
+ const g=bgeo(),ck=bcheck(),s=calc(),live=on&&!blown&&!!ck.ok,B='#0b1b2a',b=live?Math.min(s.v*s.I/2.2,1):0,dg=bdrag&&bdrag.moved?bdrag.from:-9;
+ const E=[[g.x0,g.y0,g.x1,g.y0],[g.x1,g.y0,g.x1,g.y1],[g.x1,g.y1,g.x0,g.y1],[g.x0,g.y1,g.x0,g.y0]];
+ bx.lineCap='round';bx.lineJoin='round';bx.strokeStyle=live?'#d9923f':'#3b6177';bx.lineWidth=6;
+ E.forEach(e=>{bx.beginPath();bx.moveTo(e[0],e[1]);bx.lineTo(e[2],e[3]);bx.stroke()});
+ if(live){bx.fillStyle='#ffe28a';bx.shadowColor='#ffb938';bx.shadowBlur=8;
+  E.forEach((e,j)=>{const len=Math.hypot(e[2]-e[0],e[3]-e[1]),n=Math.max(2,Math.round(len/26)),d=len/n;
+   boff[j]=((boff[j]||0)+dt*(30+Math.min(s.I,1.5)*170))%len;
+   for(let k=0;k<n;k++){const t=((k*d+boff[j])%len)/len;bx.beginPath();bx.arc(e[0]+(e[2]-e[0])*t,e[1]+(e[3]-e[1])*t,3,0,7);bx.fill()}});
+  bx.shadowBlur=0}
+ g.sl.forEach((p,i)=>{
+  const id=i===dg?null:bslots[i];
+  bx.save();bx.translate(p[0],p[1]);if(!p[2])bx.rotate(Math.PI/2);
+  bx.fillStyle=B;bx.fillRect(-48,-24,96,48);partDraw(id,live,b,blown);bx.restore();
+  const L=[[p[0],p[1]-34,'center'],[p[0]+32,p[1]+4,'left'],[p[0],p[1]+46,'center'],[p[0]-32,p[1]+4,'right']][i];
+  bx.fillStyle='#a9c0cc';bx.font='12px Kanit';bx.textAlign=L[2];bx.fillText(id?PARTS[id].nm:'ช่อง '+(i+1),L[0],L[1]);
+ });
+ const bi=bslots.indexOf('bulb');
+ if(b>0&&bi>=0&&bi!==dg){const p=g.sl[bi],gr=bx.createRadialGradient(p[0],p[1],6,p[0],p[1],40+110*b);
+  gr.addColorStop(0,'rgba(255,214,110,'+(.55*b+.1)+')');gr.addColorStop(1,'rgba(255,214,110,0)');bx.fillStyle=gr;bx.beginPath();bx.arc(p[0],p[1],40+110*b,0,7);bx.fill()}
+ if(spark>0&&bi>=0){const p=g.sl[bi];bx.strokeStyle='#fff3c4';bx.lineWidth=2;
+  for(let k=0;k<7;k++){const a=Math.random()*6.28,l=10+Math.random()*26;bx.beginPath();bx.moveTo(p[0],p[1]);bx.lineTo(p[0]+Math.cos(a)*l,p[1]+Math.sin(a)*l);bx.stroke()}spark--}
+ bx.fillStyle=live?'#7be0b0':ck.ok?'#ffd98a':'#ff8a80';bx.font='600 13px Kanit';bx.textAlign='center';
+ bx.fillText(live?'⚡ วงจรปิด · กระแสไหล':ck.ok?'วงจรครบแล้ว · กด "ดูผลวงจร"':'วงจรเปิด · กระแสไม่ไหล',g.cx,g.cy+5);
+}
+applyUI();
+}catch(e){console.error(e);alert('ส่วนเสริมฝึกต่อวงจรทำงานผิดพลาด: '+e.message)}
+})();
+</script>
+</body>
+</html>
